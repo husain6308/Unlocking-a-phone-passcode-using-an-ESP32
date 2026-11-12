@@ -36,11 +36,11 @@ const char* ap_password = "sain6308"; // حداقل ۸ کاراکتر
 
 void loadActivePins() {
   prefs.begin("pins", true);
-  pin1 = prefs.getString(pk(activeProfile, "1").c_str(), "1111");
-  pin2 = prefs.getString(pk(activeProfile, "2").c_str(), "2222");
-  pin3 = prefs.getString(pk(activeProfile, "3").c_str(), "1111");
-  pin4 = prefs.getString(pk(activeProfile, "4").c_str(), "2222");
-  realPin = prefs.getString(pk(activeProfile, "r").c_str(), "0000");
+  pin1 = prefs.getString(pk(activeProfile, "1").c_str(), "");
+  pin2 = prefs.getString(pk(activeProfile, "2").c_str(), "");
+  pin3 = prefs.getString(pk(activeProfile, "3").c_str(), "");
+  pin4 = prefs.getString(pk(activeProfile, "4").c_str(), "");
+  realPin = prefs.getString(pk(activeProfile, "r").c_str(), "");
   useEnter = prefs.getBool(pk(activeProfile, "e").c_str(), true);
   prefs.end();
 }
@@ -50,18 +50,21 @@ void loadPins() {
   if (prefs.getInt("act", -1) == -1) {
     // انتقال تنظیمات قدیمی به پروفایل اول
     prefs.putString("p0_n", "Phone 1");
-    prefs.putString("p0_1", prefs.getString("p1", "1111"));
-    prefs.putString("p0_2", prefs.getString("p2", "2222"));
-    prefs.putString("p0_3", prefs.getString("p3", "1111"));
-    prefs.putString("p0_4", prefs.getString("p4", "2222"));
-    prefs.putString("p0_r", prefs.getString("real", "0000"));
+    prefs.putString("p0_1", prefs.getString("p1", ""));
+    prefs.putString("p0_2", prefs.getString("p2", ""));
+    prefs.putString("p0_3", prefs.getString("p3", ""));
+    prefs.putString("p0_4", prefs.getString("p4", ""));
+    prefs.putString("p0_r", prefs.getString("real", ""));
     prefs.putBool("p0_e", prefs.getBool("enter", true));
     prefs.putInt("act", 0);
   }
   activeProfile = prefs.getInt("act", 0);
   for (int i = 0; i < MAX_PROFILES; i++) {
     profNames[i] = prefs.getString(pk(i, "n").c_str(), "");
-    if (profNames[i] != "") profNames[i] = prefs.getString(pk(i, "r").c_str(), "0000");
+    if (profNames[i] != "") {
+      profNames[i] = prefs.getString(pk(i, "r").c_str(), "");
+      if (profNames[i] == "") profNames[i] = "Profile " + String(i + 1);
+    }
   }
   prefs.end();
 
@@ -70,7 +73,7 @@ void loadPins() {
     for (int i = 0; i < MAX_PROFILES; i++) {
       if (profNames[i] != "") { activeProfile = i; break; }
     }
-    if (profNames[activeProfile] == "") profNames[activeProfile] = "0000";
+    if (profNames[activeProfile] == "") profNames[activeProfile] = "Profile " + String(activeProfile + 1);
   }
   loadActivePins();
 }
@@ -83,7 +86,7 @@ void savePins(String name, String p1, String p2, String p3, String p4, String re
   name.replace("\"", "");
   name.replace("&", "");
   name.trim();
-  if (name == "") name = "0000";
+  if (name == "") name = "Profile " + String(activeProfile + 1);
 
   prefs.begin("pins", false);
   prefs.putString(pk(activeProfile, "n").c_str(), name);
@@ -122,14 +125,14 @@ void handleNew() {
   for (int i = 0; i < MAX_PROFILES; i++) {
     if (profNames[i] == "") {
       activeProfile = i;
-      profNames[i] = "0000";
+      profNames[i] = "Profile " + String(i + 1);
       prefs.begin("pins", false);
       prefs.putString(pk(i, "n").c_str(), profNames[i]);
-      prefs.putString(pk(i, "1").c_str(), "1111");
-      prefs.putString(pk(i, "2").c_str(), "2222");
-      prefs.putString(pk(i, "3").c_str(), "1111");
-      prefs.putString(pk(i, "4").c_str(), "2222");
-      prefs.putString(pk(i, "r").c_str(), "0000");
+      prefs.putString(pk(i, "1").c_str(), "");
+      prefs.putString(pk(i, "2").c_str(), "");
+      prefs.putString(pk(i, "3").c_str(), "");
+      prefs.putString(pk(i, "4").c_str(), "");
+      prefs.putString(pk(i, "r").c_str(), "");
       prefs.putBool(pk(i, "e").c_str(), true);
       prefs.putInt("act", i);
       prefs.end();
@@ -237,6 +240,7 @@ void handleSave() {
 }
 
 void enterPIN(String pin) {
+  if (pin == "") return;
   keyboard.print(pin.c_str());
   delay(300);
   if (useEnter) {
